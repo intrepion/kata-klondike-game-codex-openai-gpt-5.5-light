@@ -56,6 +56,10 @@ _Avoid_: Stack, chain
 A movable face-up sequence of tableau cards that already forms a valid build.
 _Avoid_: Stack, group
 
+**Card Face**:
+The visible rank and suit presentation of a card.
+_Avoid_: Card art, card image
+
 **Reveal**:
 The automatic flip of the next face-down tableau card after the last face-up card leaves that pile.
 _Avoid_: Turn over, expose
@@ -96,9 +100,21 @@ _Avoid_: Clock, stopwatch
 A non-mutating suggestion for a legal or useful move.
 _Avoid_: Help, solver
 
+**Legal Destination**:
+A pile that can accept the currently selected or dragged card or run.
+_Avoid_: Drop zone, target
+
+**Rejection Feedback**:
+A brief non-blocking response to an attempted illegal move.
+_Avoid_: Error, invalid-move alert
+
 **Keyboard Play**:
 Player interaction with cards and piles through keyboard focus and commands rather than pointer dragging.
 _Avoid_: Keyboard shortcuts, accessibility mode
+
+**Same Deal**:
+A restart that reuses the current deal seed.
+_Avoid_: Replay, retry
 
 **Scripted Interaction Path**:
 A deterministic browser exercise that proves a specific sequence of visible game interactions works.
