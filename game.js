@@ -440,6 +440,7 @@
   const els = {};
   let game = null;
   let selected = null;
+  let hinted = null;
   let timerId = null;
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -458,6 +459,8 @@
       "new-game",
       "same-deal",
       "undo",
+      "hint",
+      "auto-finish",
       "moves",
       "timer",
       "stock",
@@ -495,11 +498,19 @@
       }
       newGame(false);
     });
+    els.hint.addEventListener("click", showHint);
+    els["auto-finish"].addEventListener("click", () => {
+      selected = null;
+      hinted = null;
+      Klondike.autoFinish(game);
+      afterAction();
+    });
     els["seed-entry"].addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         newGame(true, els["seed-entry"].value.trim());
       }
     });
+    document.addEventListener("keydown", handleKeyboard);
   }
 
   function loadGame() {
@@ -524,6 +535,7 @@
     const seed = explicitSeed || (sameDeal && game ? game.state.seed : undefined);
     const drawMode = Number(els["draw-mode"].value) === 3 ? 3 : 1;
     selected = null;
+    hinted = null;
     game = Klondike.createGame({ seed, drawMode });
     afterAction();
   }
@@ -587,6 +599,7 @@
       pile.dataset.pileIndex = String(index);
       pile.setAttribute("aria-label", `${suitName(suit)} foundation`);
       pile.addEventListener("click", () => destinationClick({ area: "foundation", pileIndex: index }));
+      bindDropTarget(pile, { area: "foundation", pileIndex: index });
       const card = game.state.foundations[index].at(-1);
       if (card) pile.append(cardButton(card, { nested: true }));
       else pile.textContent = suitSymbols[suit];
@@ -605,6 +618,7 @@
       pile.addEventListener("click", (event) => {
         if (event.target === pile) destinationClick({ area: "tableau", pileIndex });
       });
+      bindDropTarget(pile, { area: "tableau", pileIndex });
       cards.forEach((card, cardIndex) => {
         const button = cardButton(card);
         button.style.top = `${cardIndex * (card.faceUp ? 28 : 14)}px`;
@@ -632,8 +646,12 @@
     button.className = `card ${card.faceUp ? Klondike.cardColor(card) : "back"}`;
     button.dataset.cardId = card.id;
     button.disabled = options.disabled || !card.faceUp;
+    if (!button.disabled && !options.nested) {
+      button.draggable = true;
+    }
     button.setAttribute("aria-label", card.faceUp ? `${rankName(card.rank)} of ${suitName(card.suit)}` : "Face-down card");
     if (selected === card.id) button.classList.add("selected");
+    if (hinted === card.id) button.classList.add("hint");
     if (card.faceUp) {
       button.innerHTML = `<span class="rank">${card.rank}</span><span class="suit">${suitSymbols[card.suit]}</span>`;
     }
@@ -646,7 +664,19 @@
         event.stopPropagation();
         Klondike.autoMove(game, card.id);
         selected = null;
+        hinted = null;
         afterAction();
+      });
+      button.addEventListener("dragstart", (event) => {
+        selected = card.id;
+        hinted = null;
+        button.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", card.id);
+        window.requestAnimationFrame(render);
+      });
+      button.addEventListener("dragend", () => {
+        document.querySelectorAll(".card.dragging").forEach((item) => item.classList.remove("dragging"));
       });
     }
     return button;
@@ -655,6 +685,7 @@
   function cardClick(cardId) {
     if (selected === cardId) {
       selected = null;
+      hinted = null;
       render();
       return;
     }
@@ -662,11 +693,13 @@
       const destination = destinationForCard(cardId);
       if (destination && Klondike.move(game, selected, destination)) {
         selected = null;
+        hinted = null;
         afterAction();
         return;
       }
     }
     selected = cardId;
+    hinted = null;
     render();
   }
 
@@ -689,7 +722,27 @@
     const moved = Klondike.move(game, selected, destination);
     if (!moved) flashReject(destination);
     selected = moved ? null : selected;
+    hinted = null;
     afterAction();
+  }
+
+  function bindDropTarget(element, destination) {
+    element.addEventListener("dragover", (event) => {
+      if (!selected) return;
+      const legal = Klondike.legalDestinations(game, selected).some(
+        (item) => item.area === destination.area && item.pileIndex === destination.pileIndex
+      );
+      if (legal) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+      }
+    });
+    element.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const cardId = event.dataTransfer.getData("text/plain") || selected;
+      selected = cardId;
+      destinationClick(destination);
+    });
   }
 
   function highlightLegalDestinations() {
@@ -713,8 +766,70 @@
     pile.classList.add("reject");
   }
 
+  function showHint() {
+    const next = Klondike.hint(game);
+    if (!next) {
+      game.state.status = "No legal hint available.";
+      selected = null;
+      hinted = null;
+      afterAction();
+      return;
+    }
+    selected = next.cardId;
+    hinted = next.cardId;
+    game.state.status = `Hint: move ${readableCard(next.cardId)}.`;
+    afterAction();
+  }
+
+  function handleKeyboard(event) {
+    const target = event.target;
+    const editing = target && ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName);
+    if (editing) return;
+    if (event.key === "Escape") {
+      selected = null;
+      hinted = null;
+      render();
+      return;
+    }
+    if (event.key.toLowerCase() === "u") {
+      selected = null;
+      hinted = null;
+      Klondike.undo(game);
+      afterAction();
+      return;
+    }
+    if (event.key.toLowerCase() === "h") {
+      showHint();
+      return;
+    }
+    if (event.key.toLowerCase() === "n") {
+      newGame(false);
+      return;
+    }
+    if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(event.key)) {
+      moveFocus(event.key);
+    }
+  }
+
+  function moveFocus(key) {
+    const focusables = Array.from(
+      document.querySelectorAll("button:not(:disabled), input:not(:disabled), select:not(:disabled)")
+    );
+    const current = focusables.indexOf(document.activeElement);
+    const direction = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
+    const nextIndex = current < 0 ? 0 : (current + direction + focusables.length) % focusables.length;
+    focusables[nextIndex].focus();
+  }
+
   function rankName(rank) {
     return { A: "Ace", J: "Jack", Q: "Queen", K: "King" }[rank] || rank;
+  }
+
+  function readableCard(cardId) {
+    const card = [...game.state.waste, ...game.state.tableau.flat(), ...game.state.foundations.flat()].find(
+      (item) => item.id === cardId
+    );
+    return card ? `${rankName(card.rank)} of ${suitName(card.suit)}` : cardId;
   }
 
   function suitName(suit) {

@@ -228,6 +228,15 @@ button.card {
   outline-offset: 2px;
 }
 
+.card.hint {
+  outline: 3px solid #7ed7ff;
+  outline-offset: 2px;
+}
+
+.card.dragging {
+  opacity: 0.7;
+}
+
 .pile.legal {
   border-color: var(--glow);
   box-shadow: 0 0 0 3px rgba(248, 220, 124, 0.2);
