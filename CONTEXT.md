@@ -24,9 +24,17 @@ _Avoid_: Game id, shuffle code
 The face-down pile that supplies cards to the waste.
 _Avoid_: Deck, draw pile
 
+**Recycle**:
+The act of turning the waste back into the stock after the stock is empty.
+_Avoid_: Reset stock, reshuffle
+
 **Waste**:
 The face-up pile receiving cards drawn from the stock, with only its exposed cards available by rule.
 _Avoid_: Discard pile, drawn cards
+
+**Top Waste Card**:
+The only waste card currently eligible to move under the active draw mode.
+_Avoid_: Active discard, available waste
 
 **Foundation**:
 One of four suit-specific piles built upward from ace to king.
@@ -36,6 +44,10 @@ _Avoid_: Home pile, goal pile
 The seven working piles where cards are built downward in alternating colors.
 _Avoid_: Board, columns
 
+**Empty Tableau**:
+A tableau pile containing no cards and accepting only a king or a run starting with a king.
+_Avoid_: Empty column, open space
+
 **Build**:
 A legal descending alternating-color sequence in the tableau.
 _Avoid_: Stack, chain
@@ -43,6 +55,10 @@ _Avoid_: Stack, chain
 **Run**:
 A movable face-up sequence of tableau cards that already forms a valid build.
 _Avoid_: Stack, group
+
+**Reveal**:
+The automatic flip of the next face-down tableau card after the last face-up card leaves that pile.
+_Avoid_: Turn over, expose
 
 **Draw Mode**:
 The selected rule for moving cards from the stock to the waste, either draw one or draw three.
@@ -67,6 +83,14 @@ _Avoid_: Auto-play, complete
 **Auto-Finish**:
 A helper state where the game repeatedly moves safely eligible cards to foundations after no meaningful tableau choices remain.
 _Avoid_: Auto-complete, solver
+
+**Saved Game**:
+The locally persisted current game, including enough state to continue after a refresh.
+_Avoid_: Save file, checkpoint
+
+**Timer**:
+The elapsed play time for a game, starting with the first player move.
+_Avoid_: Clock, stopwatch
 
 **Hint**:
 A non-mutating suggestion for a legal or useful move.
