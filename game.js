@@ -430,3 +430,298 @@
     rankValue
   };
 });
+
+(function () {
+  if (typeof document === "undefined" || !window.Klondike) return;
+
+  const Klondike = window.Klondike;
+  const storageKey = "klondike.savedGame.v1";
+  const suitSymbols = { S: "♠", H: "♥", D: "♦", C: "♣" };
+  const els = {};
+  let game = null;
+  let selected = null;
+  let timerId = null;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    cacheElements();
+    game = loadGame();
+    bindEvents();
+    render();
+    timerId = window.setInterval(renderTimer, 1000);
+  });
+
+  function cacheElements() {
+    [
+      "status",
+      "draw-mode",
+      "seed-entry",
+      "new-game",
+      "same-deal",
+      "undo",
+      "moves",
+      "timer",
+      "stock",
+      "waste",
+      "foundations",
+      "tableau",
+      "win-panel",
+      "win-summary",
+      "win-new-game",
+      "win-same-deal"
+    ].forEach((id) => {
+      els[id] = document.getElementById(id);
+    });
+  }
+
+  function bindEvents() {
+    els.stock.addEventListener("click", () => {
+      selected = null;
+      Klondike.draw(game);
+      afterAction();
+    });
+    els["new-game"].addEventListener("click", () => newGame(false));
+    els["same-deal"].addEventListener("click", () => newGame(true));
+    els["win-new-game"].addEventListener("click", () => newGame(false));
+    els["win-same-deal"].addEventListener("click", () => newGame(true));
+    els.undo.addEventListener("click", () => {
+      selected = null;
+      Klondike.undo(game);
+      afterAction();
+    });
+    els["draw-mode"].addEventListener("change", () => {
+      if (game.state.moveCount > 0 && !window.confirm("Start a new game with this draw mode?")) {
+        els["draw-mode"].value = String(game.state.drawMode);
+        return;
+      }
+      newGame(false);
+    });
+    els["seed-entry"].addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        newGame(true, els["seed-entry"].value.trim());
+      }
+    });
+  }
+
+  function loadGame() {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) return Klondike.restoreGame(JSON.parse(raw));
+    } catch {
+      window.localStorage.removeItem(storageKey);
+    }
+    return Klondike.createGame();
+  }
+
+  function saveGame() {
+    window.localStorage.setItem(storageKey, JSON.stringify(Klondike.serialize(game)));
+  }
+
+  function newGame(sameDeal, explicitSeed) {
+    const hasProgress = game && game.state.moveCount > 0 && !game.state.wonAt;
+    if (!sameDeal && hasProgress && !window.confirm("Start a new game and abandon this one?")) {
+      return;
+    }
+    const seed = explicitSeed || (sameDeal && game ? game.state.seed : undefined);
+    const drawMode = Number(els["draw-mode"].value) === 3 ? 3 : 1;
+    selected = null;
+    game = Klondike.createGame({ seed, drawMode });
+    afterAction();
+  }
+
+  function afterAction() {
+    saveGame();
+    render();
+  }
+
+  function render() {
+    const state = game.state;
+    els.status.textContent = state.status || "";
+    els.moves.textContent = String(state.moveCount);
+    els["draw-mode"].value = String(state.drawMode);
+    els["seed-entry"].value = state.seed;
+    renderTimer();
+    renderStock();
+    renderWaste();
+    renderFoundations();
+    renderTableau();
+    renderWin();
+    highlightLegalDestinations();
+  }
+
+  function renderTimer() {
+    if (!game) return;
+    els.timer.textContent = formatTime(Klondike.elapsedMs(game.state));
+  }
+
+  function formatTime(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+
+  function renderStock() {
+    els.stock.textContent = game.state.stock.length ? "" : "↻";
+    els.stock.classList.toggle("has-cards", game.state.stock.length > 0);
+    els.stock.setAttribute(
+      "aria-label",
+      game.state.stock.length ? `Stock, ${game.state.stock.length} cards` : "Recycle waste"
+    );
+  }
+
+  function renderWaste() {
+    els.waste.innerHTML = "";
+    const visible = game.state.waste.slice(-game.state.drawMode);
+    visible.forEach((card, index) => {
+      const isTop = index === visible.length - 1;
+      els.waste.append(cardButton(card, { disabled: !isTop }));
+    });
+  }
+
+  function renderFoundations() {
+    els.foundations.innerHTML = "";
+    Klondike.suits.forEach((suit, index) => {
+      const pile = document.createElement("button");
+      pile.type = "button";
+      pile.className = "pile foundation-pile";
+      pile.dataset.area = "foundation";
+      pile.dataset.pileIndex = String(index);
+      pile.setAttribute("aria-label", `${suitName(suit)} foundation`);
+      pile.addEventListener("click", () => destinationClick({ area: "foundation", pileIndex: index }));
+      const card = game.state.foundations[index].at(-1);
+      if (card) pile.append(cardButton(card, { nested: true }));
+      else pile.textContent = suitSymbols[suit];
+      els.foundations.append(pile);
+    });
+  }
+
+  function renderTableau() {
+    els.tableau.innerHTML = "";
+    game.state.tableau.forEach((cards, pileIndex) => {
+      const pile = document.createElement("div");
+      pile.className = "pile tableau-pile";
+      pile.dataset.area = "tableau";
+      pile.dataset.pileIndex = String(pileIndex);
+      pile.setAttribute("aria-label", `Tableau ${pileIndex + 1}`);
+      pile.addEventListener("click", (event) => {
+        if (event.target === pile) destinationClick({ area: "tableau", pileIndex });
+      });
+      cards.forEach((card, cardIndex) => {
+        const button = cardButton(card);
+        button.style.top = `${cardIndex * (card.faceUp ? 28 : 14)}px`;
+        button.dataset.pileIndex = String(pileIndex);
+        button.dataset.cardIndex = String(cardIndex);
+        pile.append(button);
+      });
+      els.tableau.append(pile);
+    });
+  }
+
+  function renderWin() {
+    const won = Boolean(game.state.wonAt);
+    els["win-panel"].hidden = !won;
+    if (won) {
+      els["win-summary"].textContent = `${game.state.moveCount} moves in ${formatTime(
+        Klondike.elapsedMs(game.state)
+      )}. Seed ${game.state.seed}.`;
+    }
+  }
+
+  function cardButton(card, options = {}) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `card ${card.faceUp ? Klondike.cardColor(card) : "back"}`;
+    button.dataset.cardId = card.id;
+    button.disabled = options.disabled || !card.faceUp;
+    button.setAttribute("aria-label", card.faceUp ? `${rankName(card.rank)} of ${suitName(card.suit)}` : "Face-down card");
+    if (selected === card.id) button.classList.add("selected");
+    if (card.faceUp) {
+      button.innerHTML = `<span class="rank">${card.rank}</span><span class="suit">${suitSymbols[card.suit]}</span>`;
+    }
+    if (!options.nested) {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        cardClick(card.id);
+      });
+      button.addEventListener("dblclick", (event) => {
+        event.stopPropagation();
+        Klondike.autoMove(game, card.id);
+        selected = null;
+        afterAction();
+      });
+    }
+    return button;
+  }
+
+  function cardClick(cardId) {
+    if (selected === cardId) {
+      selected = null;
+      render();
+      return;
+    }
+    if (selected) {
+      const destination = destinationForCard(cardId);
+      if (destination && Klondike.move(game, selected, destination)) {
+        selected = null;
+        afterAction();
+        return;
+      }
+    }
+    selected = cardId;
+    render();
+  }
+
+  function destinationForCard(cardId) {
+    for (let pileIndex = 0; pileIndex < game.state.tableau.length; pileIndex += 1) {
+      if (game.state.tableau[pileIndex].some((card) => card.id === cardId)) {
+        return { area: "tableau", pileIndex };
+      }
+    }
+    for (let pileIndex = 0; pileIndex < game.state.foundations.length; pileIndex += 1) {
+      if (game.state.foundations[pileIndex].some((card) => card.id === cardId)) {
+        return { area: "foundation", pileIndex };
+      }
+    }
+    return null;
+  }
+
+  function destinationClick(destination) {
+    if (!selected) return;
+    const moved = Klondike.move(game, selected, destination);
+    if (!moved) flashReject(destination);
+    selected = moved ? null : selected;
+    afterAction();
+  }
+
+  function highlightLegalDestinations() {
+    document.querySelectorAll(".pile.legal").forEach((pile) => pile.classList.remove("legal"));
+    if (!selected) return;
+    Klondike.legalDestinations(game, selected).forEach((destination) => {
+      const pile = document.querySelector(
+        `.pile[data-area="${destination.area}"][data-pile-index="${destination.pileIndex}"]`
+      );
+      if (pile) pile.classList.add("legal");
+    });
+  }
+
+  function flashReject(destination) {
+    const pile = document.querySelector(
+      `.pile[data-area="${destination.area}"][data-pile-index="${destination.pileIndex}"]`
+    );
+    if (!pile) return;
+    pile.classList.remove("reject");
+    void pile.offsetWidth;
+    pile.classList.add("reject");
+  }
+
+  function rankName(rank) {
+    return { A: "Ace", J: "Jack", Q: "Queen", K: "King" }[rank] || rank;
+  }
+
+  function suitName(suit) {
+    return { S: "spades", H: "hearts", D: "diamonds", C: "clubs" }[suit];
+  }
+
+  window.addEventListener("beforeunload", () => {
+    if (timerId) window.clearInterval(timerId);
+  });
+})();

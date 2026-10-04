@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Klondike</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="./game.js"></script>
+  </head>
+  <body>
+    <main class="game-shell" id="game" aria-label="Klondike game table">
+      <header class="topbar">
+        <div>
+          <h1>Klondike</h1>
+          <p id="status" class="status" aria-live="polite">Loading game.</p>
+        </div>
+        <section class="controls" aria-label="Game controls">
+          <label>
+            Draw
+            <select id="draw-mode" aria-label="Draw mode">
+              <option value="1">1</option>
+              <option value="3">3</option>
+            </select>
+          </label>
+          <label>
+            Seed
+            <input id="seed-entry" type="text" autocomplete="off" spellcheck="false" aria-label="Deal seed">
+          </label>
+          <button id="new-game" type="button">New Game</button>
+          <button id="same-deal" type="button">Same Deal</button>
+          <button id="undo" type="button">Undo</button>
+        </section>
+        <dl class="scoreboard" aria-label="Current game statistics">
+          <div>
+            <dt>Moves</dt>
+            <dd id="moves">0</dd>
+          </div>
+          <div>
+            <dt>Time</dt>
+            <dd id="timer">0:00</dd>
+          </div>
+        </dl>
+      </header>
+
+      <section class="table-top" aria-label="Card table">
+        <div class="upper-row">
+          <button class="pile stock" id="stock" type="button" aria-label="Stock"></button>
+          <div class="pile waste" id="waste" aria-label="Waste"></div>
+          <div class="spacer"></div>
+          <div class="foundations" id="foundations" aria-label="Foundations"></div>
+        </div>
+        <div class="tableau" id="tableau" aria-label="Tableau"></div>
+      </section>
+
+      <section class="win-panel" id="win-panel" hidden>
+        <h2>Win complete</h2>
+        <p id="win-summary"></p>
+        <button id="win-new-game" type="button">New Game</button>
+        <button id="win-same-deal" type="button">Same Deal</button>
+      </section>
+    </main>
+  </body>
+</html>
