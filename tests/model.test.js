@@ -84,3 +84,22 @@ test("reveals the next face-down tableau card as part of an undoable move", () =
   assert.equal(Klondike.undo(game), true);
   assert.equal(game.state.tableau[0][0].faceUp, false);
 });
+
+test("auto-finish waits until tableau choices are exhausted", () => {
+  const game = Klondike.createGame({ seed: "AUTOFINISH", drawMode: 1 });
+  game.state.tableau = [
+    [{ id: "KS", suit: "S", rank: "K", faceUp: true }],
+    [{ id: "QH", suit: "H", rank: "Q", faceUp: true }],
+    [],
+    [],
+    [],
+    [],
+    []
+  ];
+  game.state.stock = [];
+  game.state.waste = [];
+
+  assert.equal(Klondike.canAutoFinish(game), false);
+  assert.equal(Klondike.autoFinish(game, 1000), false);
+  assert.equal(game.state.status, "Auto-Finish is available only when tableau choices are exhausted.");
+});

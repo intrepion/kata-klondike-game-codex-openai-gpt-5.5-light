@@ -397,6 +397,10 @@
   }
 
   function autoFinish(game, now) {
+    if (!canAutoFinish(game)) {
+      game.state.status = "Auto-Finish is available only when tableau choices are exhausted.";
+      return false;
+    }
     let moved = false;
     let next = hint(game);
     while (next && next.destination.area === "foundation") {
@@ -408,6 +412,16 @@
       game.state.status = "No safe auto-finish available.";
     }
     return moved;
+  }
+
+  function canAutoFinish(game) {
+    for (const card of topMovableCards(game.state)) {
+      const destinations = legalDestinations(game, card.id);
+      if (destinations.some((destination) => destination.area === "tableau")) {
+        return false;
+      }
+    }
+    return game.state.tableau.every((pile) => pile.every((card) => card.faceUp));
   }
 
   return {
@@ -424,6 +438,7 @@
     hint,
     autoMove,
     autoFinish,
+    canAutoFinish,
     elapsedMs,
     isWon,
     cardColor,
@@ -437,7 +452,7 @@
   const Klondike = window.Klondike;
   const storageKey = "klondike.savedGame.v1";
   const suitSymbols = { S: "♠", H: "♥", D: "♦", C: "♣" };
-  const els = {};
+  const elements = {};
   let game = null;
   let selected = null;
   let hinted = null;
@@ -472,42 +487,42 @@
       "win-new-game",
       "win-same-deal"
     ].forEach((id) => {
-      els[id] = document.getElementById(id);
+      elements[id] = document.getElementById(id);
     });
   }
 
   function bindEvents() {
-    els.stock.addEventListener("click", () => {
+    elements.stock.addEventListener("click", () => {
       selected = null;
       Klondike.draw(game);
       afterAction();
     });
-    els["new-game"].addEventListener("click", () => newGame(false));
-    els["same-deal"].addEventListener("click", () => newGame(true));
-    els["win-new-game"].addEventListener("click", () => newGame(false));
-    els["win-same-deal"].addEventListener("click", () => newGame(true));
-    els.undo.addEventListener("click", () => {
+    elements["new-game"].addEventListener("click", () => newGame(false));
+    elements["same-deal"].addEventListener("click", () => newGame(true));
+    elements["win-new-game"].addEventListener("click", () => newGame(false));
+    elements["win-same-deal"].addEventListener("click", () => newGame(true));
+    elements.undo.addEventListener("click", () => {
       selected = null;
       Klondike.undo(game);
       afterAction();
     });
-    els["draw-mode"].addEventListener("change", () => {
+    elements["draw-mode"].addEventListener("change", () => {
       if (game.state.moveCount > 0 && !window.confirm("Start a new game with this draw mode?")) {
-        els["draw-mode"].value = String(game.state.drawMode);
+        elements["draw-mode"].value = String(game.state.drawMode);
         return;
       }
       newGame(false);
     });
-    els.hint.addEventListener("click", showHint);
-    els["auto-finish"].addEventListener("click", () => {
+    elements.hint.addEventListener("click", showHint);
+    elements["auto-finish"].addEventListener("click", () => {
       selected = null;
       hinted = null;
       Klondike.autoFinish(game);
       afterAction();
     });
-    els["seed-entry"].addEventListener("keydown", (event) => {
+    elements["seed-entry"].addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
-        newGame(true, els["seed-entry"].value.trim());
+        newGame(true, elements["seed-entry"].value.trim());
       }
     });
     document.addEventListener("keydown", handleKeyboard);
@@ -533,7 +548,7 @@
       return;
     }
     const seed = explicitSeed || (sameDeal && game ? game.state.seed : undefined);
-    const drawMode = Number(els["draw-mode"].value) === 3 ? 3 : 1;
+    const drawMode = Number(elements["draw-mode"].value) === 3 ? 3 : 1;
     selected = null;
     hinted = null;
     game = Klondike.createGame({ seed, drawMode });
@@ -547,10 +562,10 @@
 
   function render() {
     const state = game.state;
-    els.status.textContent = state.status || "";
-    els.moves.textContent = String(state.moveCount);
-    els["draw-mode"].value = String(state.drawMode);
-    els["seed-entry"].value = state.seed;
+    elements.status.textContent = state.status || "";
+    elements.moves.textContent = String(state.moveCount);
+    elements["draw-mode"].value = String(state.drawMode);
+    elements["seed-entry"].value = state.seed;
     renderTimer();
     renderStock();
     renderWaste();
@@ -562,7 +577,7 @@
 
   function renderTimer() {
     if (!game) return;
-    els.timer.textContent = formatTime(Klondike.elapsedMs(game.state));
+    elements.timer.textContent = formatTime(Klondike.elapsedMs(game.state));
   }
 
   function formatTime(ms) {
@@ -572,51 +587,66 @@
   }
 
   function renderStock() {
-    els.stock.textContent = game.state.stock.length ? "" : "↻";
-    els.stock.classList.toggle("has-cards", game.state.stock.length > 0);
-    els.stock.setAttribute(
+    elements.stock.textContent = game.state.stock.length ? "" : "↻";
+    elements.stock.classList.toggle("has-cards", game.state.stock.length > 0);
+    elements.stock.setAttribute(
       "aria-label",
       game.state.stock.length ? `Stock, ${game.state.stock.length} cards` : "Recycle waste"
     );
   }
 
   function renderWaste() {
-    els.waste.innerHTML = "";
+    elements.waste.innerHTML = "";
     const visible = game.state.waste.slice(-game.state.drawMode);
     visible.forEach((card, index) => {
       const isTop = index === visible.length - 1;
-      els.waste.append(cardButton(card, { disabled: !isTop }));
+      elements.waste.append(cardButton(card, { disabled: !isTop }));
     });
   }
 
   function renderFoundations() {
-    els.foundations.innerHTML = "";
+    elements.foundations.innerHTML = "";
     Klondike.suits.forEach((suit, index) => {
-      const pile = document.createElement("button");
-      pile.type = "button";
+      const pile = document.createElement("div");
       pile.className = "pile foundation-pile";
+      pile.setAttribute("role", "button");
+      pile.tabIndex = 0;
       pile.dataset.area = "foundation";
       pile.dataset.pileIndex = String(index);
       pile.setAttribute("aria-label", `${suitName(suit)} foundation`);
       pile.addEventListener("click", () => destinationClick({ area: "foundation", pileIndex: index }));
+      pile.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          destinationClick({ area: "foundation", pileIndex: index });
+        }
+      });
       bindDropTarget(pile, { area: "foundation", pileIndex: index });
       const card = game.state.foundations[index].at(-1);
-      if (card) pile.append(cardButton(card, { nested: true }));
+      if (card) pile.append(cardButton(card));
       else pile.textContent = suitSymbols[suit];
-      els.foundations.append(pile);
+      elements.foundations.append(pile);
     });
   }
 
   function renderTableau() {
-    els.tableau.innerHTML = "";
+    elements.tableau.innerHTML = "";
     game.state.tableau.forEach((cards, pileIndex) => {
       const pile = document.createElement("div");
       pile.className = "pile tableau-pile";
+      pile.setAttribute("role", "button");
+      pile.tabIndex = 0;
       pile.dataset.area = "tableau";
       pile.dataset.pileIndex = String(pileIndex);
       pile.setAttribute("aria-label", `Tableau ${pileIndex + 1}`);
       pile.addEventListener("click", (event) => {
         if (event.target === pile) destinationClick({ area: "tableau", pileIndex });
+      });
+      pile.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          destinationClick({ area: "tableau", pileIndex });
+        }
       });
       bindDropTarget(pile, { area: "tableau", pileIndex });
       cards.forEach((card, cardIndex) => {
@@ -626,15 +656,15 @@
         button.dataset.cardIndex = String(cardIndex);
         pile.append(button);
       });
-      els.tableau.append(pile);
+      elements.tableau.append(pile);
     });
   }
 
   function renderWin() {
     const won = Boolean(game.state.wonAt);
-    els["win-panel"].hidden = !won;
+    elements["win-panel"].hidden = !won;
     if (won) {
-      els["win-summary"].textContent = `${game.state.moveCount} moves in ${formatTime(
+      elements["win-summary"].textContent = `${game.state.moveCount} moves in ${formatTime(
         Klondike.elapsedMs(game.state)
       )}. Seed ${game.state.seed}.`;
     }
@@ -769,16 +799,16 @@
   function showHint() {
     const next = Klondike.hint(game);
     if (!next) {
-      game.state.status = "No legal hint available.";
       selected = null;
       hinted = null;
-      afterAction();
+      render();
+      elements.status.textContent = "No legal hint available.";
       return;
     }
-    selected = next.cardId;
+    selected = null;
     hinted = next.cardId;
-    game.state.status = `Hint: move ${readableCard(next.cardId)}.`;
-    afterAction();
+    render();
+    elements.status.textContent = `Hint: move ${readableCard(next.cardId)}.`;
   }
 
   function handleKeyboard(event) {
