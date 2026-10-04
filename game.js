@@ -649,12 +649,16 @@
         }
       });
       bindDropTarget(pile, { area: "tableau", pileIndex });
+      let offset = 0;
       cards.forEach((card, cardIndex) => {
         const button = cardButton(card);
-        button.style.top = `${cardIndex * (card.faceUp ? 28 : 14)}px`;
+        button.style.top = `${offset}px`;
         button.dataset.pileIndex = String(pileIndex);
         button.dataset.cardIndex = String(cardIndex);
         pile.append(button);
+        offset += card.faceUp
+          ? cssPixelValue("--tableau-face-step")
+          : cssPixelValue("--tableau-back-step");
       });
       elements.tableau.append(pile);
     });
@@ -710,6 +714,18 @@
       });
     }
     return button;
+  }
+
+  function cssPixelValue(name) {
+    const probe = document.createElement("div");
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    probe.style.height = `var(${name})`;
+    document.body.append(probe);
+    const pixels = probe.getBoundingClientRect().height;
+    probe.remove();
+    return pixels;
   }
 
   function cardClick(cardId) {
