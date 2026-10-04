@@ -56,13 +56,29 @@ _Avoid_: Action, turn
 The reversal of the most recent move in the current game.
 _Avoid_: Back, rewind
 
+**Restart**:
+The act of abandoning the current game state and beginning again from a fresh deal or the same deal seed.
+_Avoid_: Reset, redeal
+
 **Auto-Move**:
 A helper move that sends an eligible card to a foundation without the player choosing that foundation manually.
 _Avoid_: Auto-play, complete
 
+**Auto-Finish**:
+A helper state where the game repeatedly moves safely eligible cards to foundations after no meaningful tableau choices remain.
+_Avoid_: Auto-complete, solver
+
 **Hint**:
 A non-mutating suggestion for a legal or useful move.
 _Avoid_: Help, solver
+
+**Keyboard Play**:
+Player interaction with cards and piles through keyboard focus and commands rather than pointer dragging.
+_Avoid_: Keyboard shortcuts, accessibility mode
+
+**Scripted Interaction Path**:
+A deterministic browser exercise that proves a specific sequence of visible game interactions works.
+_Avoid_: Smoke test, demo
 
 **Win**:
 The state where all cards are in the four foundations.
