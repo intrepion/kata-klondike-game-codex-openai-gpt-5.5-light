@@ -20,6 +20,10 @@ _Avoid_: Setup, layout
 A reproducible identifier for a shuffled deal.
 _Avoid_: Game id, shuffle code
 
+**Seed Entry**:
+The player-facing control for starting a game from a specific deal seed.
+_Avoid_: Seed input, custom game
+
 **Stock**:
 The face-down pile that supplies cards to the waste.
 _Avoid_: Deck, draw pile
@@ -111,6 +115,10 @@ _Avoid_: Error, invalid-move alert
 **Keyboard Play**:
 Player interaction with cards and piles through keyboard focus and commands rather than pointer dragging.
 _Avoid_: Keyboard shortcuts, accessibility mode
+
+**Tap Selection**:
+Player interaction where a card or run is selected first and a destination is chosen second.
+_Avoid_: Click mode, mobile mode
 
 **Same Deal**:
 A restart that reuses the current deal seed.
