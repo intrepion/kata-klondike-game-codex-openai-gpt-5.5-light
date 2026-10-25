@@ -1,5 +1,9 @@
 # Klondike
 
+## Play online
+
+[Play Klondike](https://intrepion.github.io/kata-klondike-game-codex-openai-gpt-5.5-light/) — free, playable in your browser.
+
 A dependency-free modern classic Klondike game. The shipped game runs from the static files in this repository and supports direct `file://` launch.
 
 ## Play
