@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "workflowCommit": "d6512c0c34cc0f3d1bbfd6ec58cd9886d7029850",
+  "sourceCommit": "470560f315edfafb641331f454804e92b2443439",
+  "runId": "41379350172",
+  "url": "http://127.0.0.1:4178/",
+  "inputs": {
+    "index.html": "607c6b2d2f2bc899d447158f4c398e70f526a1f29eeea4b464e83513e29a6411",
+    "styles.css": "90a94c8874cec149fbbd17841106a41a8eb01a1ba5f469dde1eb43014b87538a",
+    "game.js": "6d8912f645c02234b3ac8e1aa5821c357b875f36be065d4db7c6cfc5fc64fd45"
+  },
+  "browser": "153.0.8010.12",
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "seeds": [
+    "arcade-2026",
+    "arcade-2027"
+  ],
+  "screenshots": [
+    "cards-01.png",
+    "cards-02.png"
+  ]
+}

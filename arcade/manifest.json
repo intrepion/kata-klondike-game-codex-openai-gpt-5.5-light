@@ -1,6 +1,47 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "gameId": "kata-klondike-game-codex-openai-gpt-5.5-light",
   "playUrl": "https://intrepion.github.io/kata-klondike-game-codex-openai-gpt-5.5-light/",
-  "screenshots": []
+  "screenshots": [
+    {
+      "path": "arcade/screenshots/ci-20261102-01.jpg",
+      "sha256": "ee761bcc7258eefcb486b09a1940e4cc3afd5a9f082312c6e2ebbba4c61e922c",
+      "alt": "Klondike gameplay, view 1",
+      "provenance": {
+        "kind": "ci_gameplay_capture",
+        "sourcePath": "arcade/capture-evidence/ci-20261102-01.png",
+        "sourceSha256": "ef9e63b82232c4868d9b273f080f23b908a0a066f978044f0b212bedaf981b45",
+        "captureCommit": "470560f315edfafb641331f454804e92b2443439",
+        "workflowRunId": "41379350172",
+        "inputHashes": {
+          "index.html": "607c6b2d2f2bc899d447158f4c398e70f526a1f29eeea4b464e83513e29a6411",
+          "styles.css": "90a94c8874cec149fbbd17841106a41a8eb01a1ba5f469dde1eb43014b87538a",
+          "game.js": "6d8912f645c02234b3ac8e1aa5821c357b875f36be065d4db7c6cfc5fc64fd45"
+        },
+        "publishedFilesVerifiedAt": "2026-11-02T19:01:20Z",
+        "captureRecordPath": "arcade/capture-evidence/ci-20261102-record.json",
+        "captureRecordSha256": "cf99e193f65ddd281d6a6a52e6e7008df67fa49247cc013018435a7471c120eb"
+      }
+    },
+    {
+      "path": "arcade/screenshots/ci-20261102-02.jpg",
+      "sha256": "4c29c1bfd551d4bd186b3b2065ce993beb0075b95be5843a620d253878802ae5",
+      "alt": "Klondike gameplay, view 2",
+      "provenance": {
+        "kind": "ci_gameplay_capture",
+        "sourcePath": "arcade/capture-evidence/ci-20261102-02.png",
+        "sourceSha256": "0c67f99ae4bf4855e9a0a66bcf1dedc624e15d46265bf6c9e59865a551a6f9c6",
+        "captureCommit": "470560f315edfafb641331f454804e92b2443439",
+        "workflowRunId": "41379350172",
+        "inputHashes": {
+          "index.html": "607c6b2d2f2bc899d447158f4c398e70f526a1f29eeea4b464e83513e29a6411",
+          "styles.css": "90a94c8874cec149fbbd17841106a41a8eb01a1ba5f469dde1eb43014b87538a",
+          "game.js": "6d8912f645c02234b3ac8e1aa5821c357b875f36be065d4db7c6cfc5fc64fd45"
+        },
+        "publishedFilesVerifiedAt": "2026-11-02T19:01:20Z",
+        "captureRecordPath": "arcade/capture-evidence/ci-20261102-record.json",
+        "captureRecordSha256": "cf99e193f65ddd281d6a6a52e6e7008df67fa49247cc013018435a7471c120eb"
+      }
+    }
+  ]
 }
