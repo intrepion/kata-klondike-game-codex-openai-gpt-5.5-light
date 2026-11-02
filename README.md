@@ -31,3 +31,7 @@ npm run check
 ```
 
 The check suite runs syntax validation, model tests, a served browser test, and a direct `file://` browser launch test.
+
+## Arcade metadata
+
+See [docs/arcade-metadata.md](docs/arcade-metadata.md) for the game-owned manifest and screenshot provenance.
