@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm install --no-save --ignore-scripts --package-lock=false playwright@1.63.0
-      - run: npx playwright install --with-deps chromium
+      - run: node node_modules/playwright/cli.js install --with-deps chromium
       - name: Test and stage game
         run: |
           node --test tests/*.test.js
@@ -28,7 +28,7 @@ jobs:
         env:
           CAPTURE_OUTPUT: capture-output
         run: |
-          export GAME_SOURCE_COMMIT="$(git rev-parse HEAD^)"
+          export GAME_SOURCE_COMMIT="470560f315edfafb641331f454804e92b2443439"
           python3 -m http.server 4178 --bind 127.0.0.1 --directory capture-site > /tmp/klondike-http.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
